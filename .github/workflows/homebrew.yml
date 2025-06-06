@@ -3,8 +3,6 @@ name: Update Homebrew Tap
 on:
   release:
     types: [published]
-    branches:
-      - main
 
 jobs:
   update-tap:
