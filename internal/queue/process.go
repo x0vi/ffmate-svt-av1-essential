@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"sync"
 	"time"
@@ -95,6 +96,13 @@ func (q *Queue) processTask(task *model.Task, ctx context.Context, doneFunc func
 	task.Status = dto.RUNNING
 	q.updateTask(task)
 
+	// create output directory if it does not exist (recursive)
+	err = os.MkdirAll(filepath.Dir(task.OutputFile.Resolved), 0755)
+	if err != nil {
+		q.failTask(task, fmt.Errorf("failed to create non-existing output directory: %v", err))
+		return
+	}
+
 	q.Sev.Logger().Infof("starting processing (uuid: %s)", task.Uuid)
 	err = ffmpeg.Execute(
 		&ffmpeg.ExecutionRequest{
@@ -164,6 +172,13 @@ func (q *Queue) prePostProcessTask(task *model.Task, processor *dto.PrePostProce
 					processor.SidecarPath.Resolved = wildcards.Replace(processor.SidecarPath.Raw, task.InputFile.Resolved, task.OutputFile.Resolved, task.Source)
 				}
 				q.updateTask(task)
+
+				// create sidebar-output directory if it does not exist (recursive)
+				err := os.MkdirAll(filepath.Dir(processor.SidecarPath.Resolved), 0755)
+				if err != nil {
+					return err
+				}
+
 				err = os.WriteFile(processor.SidecarPath.Resolved, b, 0644)
 				if err != nil {
 					processor.Error = fmt.Errorf("failed to write sidecar: %v", err).Error()
