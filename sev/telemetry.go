@@ -32,8 +32,6 @@ type Stats struct {
 	Config map[string]interface{}
 }
 
-var debugTelemetry = debug.Extend("telemetry")
-
 func (s *Sev) SendTelemetry(targetUrl string, statistics map[string]interface{}, conf map[string]interface{}) {
 	stats := Stats{
 		AppName:        config.Config().AppName,
@@ -101,7 +99,5 @@ func (s *Sev) SendTelemetry(targetUrl string, statistics map[string]interface{},
 	_, err = client.Do(req)
 	if err != nil {
 		s.Logger().Warnf("failed to send telemetry data: %+v", err)
-	} else {
-		debugTelemetry.Debugf("sent telemetry data")
 	}
 }

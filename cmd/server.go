@@ -108,9 +108,9 @@ func start(cmd *cobra.Command, args []string) {
 			sendTelemetry(s, err == nil)
 		})
 
-		// 24h interval update check
+		// 3h interval update check
 		go func() {
-			const interval = 24 * time.Hour
+			const interval = 3 * time.Hour
 			for {
 				now := time.Now()
 				next := now.Truncate(interval).Add(interval)
