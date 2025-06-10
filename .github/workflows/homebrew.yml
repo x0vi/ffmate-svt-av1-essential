@@ -20,13 +20,13 @@ jobs:
 
     - name: Download Release Assets
       run: |
-        curl -L -o ffmate_Darwin_x86_64.tar.gz  https://github.com/welovemedia/ffmate/releases/download/${RELEASE_NAME}/ffmate_Darwin_x86_64.tar.gz
-        curl -L -o ffmate_Darwin_arm64.tar.gz  https://github.com/welovemedia/ffmate/releases/download/${RELEASE_NAME}/ffmate_Darwin_arm64.tar.gz
+        curl -L -o ffmate_darwin_amd64.tar.gz https://github.com/welovemedia/ffmate/releases/download/${RELEASE_NAME}/ffmate_darwin_amd64.tar.gz
+        curl -L -o ffmate_darwin_arm64.tar.gz https://github.com/welovemedia/ffmate/releases/download/${RELEASE_NAME}/ffmate_darwin_arm64.tar.gz
 
     - name: Compute SHA256 Sums
       run: |
-        echo "AMD64_SHA256=$(shasum -a 256 ffmate_Darwin_x86_64.tar.gz | awk '{print $1}')" >> $GITHUB_ENV
-        echo "ARM64_SHA256=$(shasum -a 256 ffmate_Darwin_arm64.tar.gz | awk '{print $1}')" >> $GITHUB_ENV
+        echo "AMD64_SHA256=$(shasum -a 256 ffmate_darwin_amd64.tar.gz | awk '{print $1}')" >> $GITHUB_ENV
+        echo "ARM64_SHA256=$(shasum -a 256 ffmate_darwin_arm64.tar.gz | awk '{print $1}')" >> $GITHUB_ENV
 
     - name: Update Homebrew Cask
       run: |
