@@ -107,49 +107,29 @@ func start(cmd *cobra.Command, args []string) {
 		s.RegisterShutdownHook(func(s *sev.Sev) {
 			sendTelemetry(s, err == nil)
 		})
-		telemetryTicker := time.NewTicker(24 * time.Hour)
-		s.RegisterShutdownHook(func(s *sev.Sev) {
-			telemetryTicker.Stop()
-		})
+
+		// 24h interval update check
 		go func() {
+			const interval = 24 * time.Hour
 			for {
-				_, ok := <-telemetryTicker.C
-				if !ok {
-					return
-				}
-				func() {
-					defer func() {
-						if r := recover(); r != nil {
-							s.Logger().Warnf("recovered in telemetry ticker: %v", r)
-						}
-					}()
-					sendTelemetry(s, err == nil)
-				}()
+				now := time.Now()
+				next := now.Truncate(interval).Add(interval)
+				time.Sleep(time.Until(next))
+				sendTelemetry(s, err == nil)
 			}
 		}()
-
 	}
 
 	internal.Init(s, config.Config().MaxConcurrentTasks, frontend)
 
-	updateTicker := time.NewTicker(1 * time.Hour)
-	s.RegisterShutdownHook(func(s *sev.Sev) {
-		updateTicker.Stop()
-	})
+	// 1h interval update check
 	go func() {
+		const interval = 1 * time.Hour
 		for {
-			_, ok := <-updateTicker.C
-			if !ok {
-				return
-			}
-			func() {
-				defer func() {
-					if r := recover(); r != nil {
-						s.Logger().Warnf("recovered in update ticker: %v", r)
-					}
-				}()
-				monitorUpdateAvailable(s)
-			}()
+			now := time.Now()
+			next := now.Truncate(interval).Add(interval)
+			time.Sleep(time.Until(next))
+			monitorUpdateAvailable(s)
 		}
 	}()
 
