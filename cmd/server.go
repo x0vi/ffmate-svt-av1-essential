@@ -113,8 +113,18 @@ func start(cmd *cobra.Command, args []string) {
 		})
 		go func() {
 			for {
-				<-telemetryTicker.C
-				sendTelemetry(s, err == nil)
+				_, ok := <-telemetryTicker.C
+				if !ok {
+					return
+				}
+				func() {
+					defer func() {
+						if r := recover(); r != nil {
+							s.Logger().Warnf("recovered in telemetry ticker: %v", r)
+						}
+					}()
+					sendTelemetry(s, err == nil)
+				}()
 			}
 		}()
 
@@ -128,8 +138,18 @@ func start(cmd *cobra.Command, args []string) {
 	})
 	go func() {
 		for {
-			<-updateTicker.C
-			monitorUpdateAvailable(s)
+			_, ok := <-updateTicker.C
+			if !ok {
+				return
+			}
+			func() {
+				defer func() {
+					if r := recover(); r != nil {
+						s.Logger().Warnf("recovered in update ticker: %v", r)
+					}
+				}()
+				monitorUpdateAvailable(s)
+			}()
 		}
 	}()
 

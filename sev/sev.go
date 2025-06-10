@@ -167,12 +167,12 @@ func (s *Sev) RegisterSignalHook() {
 	go func() {
 		<-s.sigChannel
 		debug.Debug("received interrupt signal, running shutdown hooks")
-		s.isShuttingDown = true
 		s.Shutdown()
 	}()
 }
 
 func (s *Sev) Shutdown() {
+	s.isShuttingDown = true
 	for _, hook := range s.shutdownHooks {
 		hook(s)
 	}
