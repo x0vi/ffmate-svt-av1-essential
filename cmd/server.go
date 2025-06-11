@@ -32,6 +32,8 @@ var iconDataW []byte
 //go:embed assets/icon.ico
 var iconDataC []byte
 
+var isDocker bool = false
+
 var serverCmd = &cobra.Command{
 	Use:   "server",
 	Short: "start the server",
@@ -50,20 +52,23 @@ func init() {
 		serverCmd.PersistentFlags().StringP("database", "b", "~/.ffmate/db.sqlite", "the path do the database")
 	}
 	serverCmd.PersistentFlags().UintP("max-concurrent-tasks", "m", 3, "define maximum concurrent running tasks")
-	serverCmd.PersistentFlags().StringP("ai", "", "", "ai vendor:model:key")
 	serverCmd.PersistentFlags().BoolP("send-telemetry", "s", true, "enable sending anonymous telemetry data")
+	serverCmd.PersistentFlags().BoolP("no-ui", "n", false, "do not open the ui in the browser")
 
 	viper.BindPFlag("ffmpeg", serverCmd.PersistentFlags().Lookup("ffmpeg"))
 	viper.BindPFlag("port", serverCmd.PersistentFlags().Lookup("port"))
 	viper.BindPFlag("tray", serverCmd.PersistentFlags().Lookup("tray"))
 	viper.BindPFlag("database", serverCmd.PersistentFlags().Lookup("database"))
 	viper.BindPFlag("maxConcurrentTasks", serverCmd.PersistentFlags().Lookup("max-concurrent-tasks"))
-	viper.BindPFlag("ai", serverCmd.PersistentFlags().Lookup("ai"))
 	viper.BindPFlag("sendTelemetry", serverCmd.PersistentFlags().Lookup("send-telemetry"))
+	viper.BindPFlag("noUI", serverCmd.PersistentFlags().Lookup("no-ui"))
 }
 
 func start(cmd *cobra.Command, args []string) {
 	config.Init()
+
+	_, err := os.Stat("/.dockerenv")
+	isDocker = err == nil
 
 	s := sev.New("ffmate", config.Config().AppVersion, config.Config().Database, config.Config().Port)
 	switch config.Config().Loglevel {
@@ -101,11 +106,25 @@ func start(cmd *cobra.Command, args []string) {
 
 	s.RegisterStartupHook(func(s *sev.Sev) {
 		s.Logger().Infof("server is listening on 0.0.0.0:%d (version: %s)", config.Config().Port, config.Config().AppVersion)
+		if !config.Config().NoUI && !isDocker {
+			// open the ui in the browser
+			url := fmt.Sprintf("http://localhost:%d", config.Config().Port)
+			switch runtime.GOOS {
+			case "linux":
+				exec.Command("xdg-open", url).Start()
+				break
+			case "darwin":
+				exec.Command("open", url).Start()
+				break
+			case "windows":
+				exec.Command("rundll32", "url.dll,FileProtocolHandler", url).Start()
+				break
+			}
+		}
 	})
 	if config.Config().SendTelemetry {
-		_, err := os.Stat("/.dockerenv")
 		s.RegisterShutdownHook(func(s *sev.Sev) {
-			sendTelemetry(s, err == nil)
+			sendTelemetry(s, isDocker)
 		})
 
 		// 3h interval update check
@@ -115,7 +134,7 @@ func start(cmd *cobra.Command, args []string) {
 				now := time.Now()
 				next := now.Truncate(interval).Add(interval)
 				time.Sleep(time.Until(next))
-				sendTelemetry(s, err == nil)
+				sendTelemetry(s, isDocker)
 			}
 		}()
 	}
@@ -197,7 +216,6 @@ func sendTelemetry(s *sev.Sev, isDocker bool) {
 			"MaxConcurrentTasks": config.Config().MaxConcurrentTasks,
 			"Debug":              config.Config().Debug,
 			"Docker":             isDocker,
-			"AI":                 config.Config().AI != "",
 		},
 	)
 }
