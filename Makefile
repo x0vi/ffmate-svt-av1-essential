@@ -12,7 +12,7 @@ test+slow:
 	go test ./... --tags=slow
 
 e2e:
-	go run -race e2e/main.go server --send-telemetry=false --database="file::memory:?cache=shared" --loglevel=none
+	go run -race e2e/main.go server --send-telemetry=false --database="file::memory:?cache=shared" --loglevel=none --no-ui
 
 dev: 
 	go run -race main.go server -d "*" --send-telemetry=false

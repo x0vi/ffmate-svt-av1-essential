@@ -59,7 +59,6 @@ func Init(s *sev.Sev, concurrentTasks uint, frontend embed.FS) {
 	s.RegisterController(&controller.VersionController{Prefix: prefix})
 	s.RegisterController(&controller.WebsocketController{Prefix: prefix})
 	s.RegisterController(&controller.UmamiController{Prefix: prefix})
-	s.RegisterController(&controller.AIController{Prefix: prefix})
 	s.RegisterController(&controller.ClientController{Prefix: prefix})
 
 	// Initialize queue processor

@@ -27,7 +27,7 @@ func TestConfig(t *testing.T) {
 	viper.Set("loglevel", "trace")
 	viper.Set("maxConcurrentTasks", uint(4))
 	viper.Set("sendTelemetry", true)
-	viper.Set("ai", "test:test:test")
+	viper.Set("noUI", true)
 
 	Init()
 	c := Config()
@@ -49,7 +49,7 @@ func TestConfig(t *testing.T) {
 		{"Loglevel", c.Loglevel, "trace", "Loglevel mismatch"},
 		{"MaxConcurrentTasks", c.MaxConcurrentTasks, uint(4), "MaxConcurrentTasks mismatch"},
 		{"SendTelemetry", c.SendTelemetry, true, "SendTelemetry mismatch"},
-		{"AI", c.AI, "test:test:test", "AI setting mismatch"},
+		{"NoUI", c.NoUI, true, "NoUI mismatch"},
 	}
 
 	// Run tests and track covered fields

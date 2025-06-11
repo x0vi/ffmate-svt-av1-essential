@@ -22,26 +22,6 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/ai": {
-            "get": {
-                "description": "Get AI configuration",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "ai"
-                ],
-                "summary": "Get AI configuration",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/dto.AI"
-                        }
-                    }
-                }
-            }
-        },
         "/client": {
             "get": {
                 "description": "Get Client info",
@@ -720,20 +700,6 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "dto.AI": {
-            "type": "object",
-            "properties": {
-                "key": {
-                    "type": "string"
-                },
-                "model": {
-                    "type": "string"
-                },
-                "vendor": {
-                    "type": "string"
-                }
-            }
-        },
         "dto.Client": {
             "type": "object",
             "properties": {

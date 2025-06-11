@@ -20,8 +20,7 @@ type ConfigDefinition struct {
 	Loglevel           string `mapstructure:"loglevel"`
 	MaxConcurrentTasks uint   `mapstructure:"maxConcurrentTasks"`
 	SendTelemetry      bool   `mapstructure:"sendTelemetry"`
-
-	AI string `mapstructure:"ai"`
+	NoUI               bool   `mapstructure:"noUI"`
 }
 
 var config ConfigDefinition
