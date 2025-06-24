@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"reflect"
+	"sync"
 	"testing"
 
 	"github.com/spf13/viper"
@@ -50,6 +51,7 @@ func TestConfig(t *testing.T) {
 		{"MaxConcurrentTasks", c.MaxConcurrentTasks, uint(4), "MaxConcurrentTasks mismatch"},
 		{"SendTelemetry", c.SendTelemetry, true, "SendTelemetry mismatch"},
 		{"NoUI", c.NoUI, true, "NoUI mismatch"},
+		{"Mutex", c.Mutex, sync.RWMutex{}, "Mutex mismatch"},
 	}
 
 	// Run tests and track covered fields

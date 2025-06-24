@@ -30,7 +30,9 @@ func Execute(request *ExecutionRequest) error {
 		return fmt.Errorf("FFMPEG - failed to parse command: %v", err)
 	}
 	args = append(args, "-progress", "pipe:2")
+	config.Config().Mutex.RLock()
 	cmd := exec.CommandContext(request.Ctx, config.Config().FFMpeg, args...)
+	config.Config().Mutex.RUnlock()
 
 	// Buffers for capturing full stderr
 	var stderrBuf bytes.Buffer

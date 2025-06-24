@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"sync"
 
 	"github.com/spf13/viper"
 )
@@ -21,6 +22,8 @@ type ConfigDefinition struct {
 	MaxConcurrentTasks uint   `mapstructure:"maxConcurrentTasks"`
 	SendTelemetry      bool   `mapstructure:"sendTelemetry"`
 	NoUI               bool   `mapstructure:"noUI"`
+
+	Mutex sync.RWMutex
 }
 
 var config ConfigDefinition
@@ -31,12 +34,13 @@ func Init() {
 		fmt.Printf("failed to unmarshal config: %s\n", err)
 		os.Exit(1)
 	}
+	config.Mutex = sync.RWMutex{}
 
 	if config.Debug == "" {
 		config.Debug = os.Getenv("DEBUGO")
 	}
 }
 
-func Config() ConfigDefinition {
-	return config
+func Config() *ConfigDefinition {
+	return &config
 }

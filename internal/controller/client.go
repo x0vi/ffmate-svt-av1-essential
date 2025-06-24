@@ -30,6 +30,7 @@ func (c *ClientController) Setup(s *sev.Sev) {
 func (c *ClientController) getClient(gin *gin.Context) {
 	gin.JSON(200, &dto.Client{
 		Version: config.Config().AppVersion,
+		FFmpeg:  config.Config().FFMpeg,
 		Os:      runtime.GOOS,
 		Arch:    runtime.GOARCH,
 	})

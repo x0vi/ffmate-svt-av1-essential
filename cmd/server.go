@@ -43,7 +43,7 @@ var serverCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(serverCmd)
 
-	serverCmd.PersistentFlags().StringP("ffmpeg", "f", "ffmpeg", "path to ffmpeg binary")
+	serverCmd.PersistentFlags().StringP("ffmpeg", "f", "", "path to ffmpeg binary")
 	serverCmd.PersistentFlags().StringP("port", "p", "3000", "the port to listen to")
 	serverCmd.PersistentFlags().BoolP("tray", "t", false, "start with tray menu (experimental)")
 	if runtime.GOOS == "windows" {
@@ -67,9 +67,9 @@ func init() {
 func start(cmd *cobra.Command, args []string) {
 	config.Init()
 
+	// instantiate service
 	_, err := os.Stat("/.dockerenv")
 	isDocker = err == nil
-
 	s := sev.New("ffmate", config.Config().AppVersion, config.Config().Database, config.Config().Port)
 	switch config.Config().Loglevel {
 	case "debug":
@@ -87,8 +87,35 @@ func start(cmd *cobra.Command, args []string) {
 		s.Logger().SetOutput(io.Discard)
 	}
 
-	s.RegisterSignalHook()
+	// lookup ffmpeg (path)
+	go func() {
+		const interval = 10 * time.Second
+		found := false
+		for {
+			config.Config().Mutex.Lock()
+			if config.Config().FFMpeg == "" {
+				config.Config().FFMpeg = "ffmpeg"
+			}
+			if path, err := exec.LookPath(config.Config().FFMpeg); err != nil {
+				config.Config().FFMpeg = ""
+				found = false
+				s.Logger().Errorf("ffmpeg binary not found in PATH. Please install ffmpeg or set the path to the ffmpeg binary with the --ffmpeg flag. Error: %s", err)
+			} else {
+				config.Config().FFMpeg = path
+				if !found {
+					found = true
+					s.Logger().Infof("ffmpeg binary found at %s", config.Config().FFMpeg)
+				}
+			}
+			config.Config().Mutex.Unlock()
+			now := time.Now()
+			next := now.Truncate(interval).Add(interval)
+			time.Sleep(time.Until(next))
+		}
+	}()
 
+	// setup hooks
+	s.RegisterSignalHook()
 	s.RegisterStartupHook(func(s *sev.Sev) {
 		// broadcast all logs via websocket
 		lb := &utils.LogBroadcaster{
@@ -103,7 +130,6 @@ func start(cmd *cobra.Command, args []string) {
 		s.Logger().SetOutput(mw)
 		debugo.SetOutput(mw)
 	})
-
 	s.RegisterStartupHook(func(s *sev.Sev) {
 		s.Logger().Infof("server is listening on 0.0.0.0:%d (version: %s)", config.Config().Port, config.Config().AppVersion)
 		if !config.Config().NoUI && !isDocker {
@@ -112,16 +138,15 @@ func start(cmd *cobra.Command, args []string) {
 			switch runtime.GOOS {
 			case "linux":
 				exec.Command("xdg-open", url).Start()
-				break
 			case "darwin":
 				exec.Command("open", url).Start()
-				break
 			case "windows":
 				exec.Command("rundll32", "url.dll,FileProtocolHandler", url).Start()
-				break
 			}
 		}
 	})
+
+	// telemetry
 	if config.Config().SendTelemetry {
 		s.RegisterShutdownHook(func(s *sev.Sev) {
 			sendTelemetry(s, isDocker)
@@ -139,9 +164,7 @@ func start(cmd *cobra.Command, args []string) {
 		}()
 	}
 
-	internal.Init(s, config.Config().MaxConcurrentTasks, frontend)
-
-	// 1h interval update check
+	// monitor for updates
 	go func() {
 		const interval = 1 * time.Hour
 		for {
@@ -151,9 +174,12 @@ func start(cmd *cobra.Command, args []string) {
 			monitorUpdateAvailable(s)
 		}
 	}()
-
 	monitorUpdateAvailable(s)
 
+	// init service loader
+	internal.Init(s, config.Config().MaxConcurrentTasks, frontend)
+
+	// create readyFunc
 	readyFunc := func() {
 		err := s.Start(config.Config().Port)
 		if err != nil {
@@ -161,6 +187,7 @@ func start(cmd *cobra.Command, args []string) {
 		}
 	}
 
+	// start server
 	if config.Config().Tray {
 		useSystray(s, readyFunc)
 	} else {
