@@ -7,7 +7,7 @@ RUN apk update && apk add ffmpeg
 COPY ./_bin/linux-arm64 /app/ffmate
 ENV PORT=3000
 ENV DB=/app/db/sqlite.db
-ENV DEBUGO=*
+ENV DEBUGO=
 ENV LOGLEVEL=info
 ENV MAX_CONCURRENT_TASKS=3
 EXPOSE ${PORT}
