@@ -1,6 +1,7 @@
 package queue
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -204,15 +205,17 @@ func (q *Queue) prePostProcessTask(task *model.Task, processor *dto.PrePostProce
 				cmd := exec.Command(args[0], args[1:]...)
 				debug.Debugf("triggered %sProcessing script (uuid: %s)", processorType, task.Uuid)
 
+				var stderr bytes.Buffer
+				cmd.Stderr = &stderr
+
 				if err := cmd.Start(); err != nil {
-					processor.Error = err.Error()
-					q.Sev.Logger().Errorf("failed to start %sProcessing script (uuid: %s): %v", processorType, task.Uuid, err)
+					processor.Error = fmt.Sprintf("%s (exit code: %d)", stderr.String(), cmd.ProcessState.ExitCode())
+					q.Sev.Logger().Errorf("failed to start %sProcessing script with exit code %d (uuid: %s): stderr: %s", processorType, cmd.ProcessState.ExitCode(), task.Uuid, stderr.String())
 				} else {
 					if err := cmd.Wait(); err != nil {
-						processor.Error = err.Error()
-						q.Sev.Logger().Errorf("failed %sProcessing script (uuid: %s): %v", processorType, task.Uuid, err)
+						processor.Error = fmt.Sprintf("%s (exit code: %d)", stderr.String(), cmd.ProcessState.ExitCode())
+						q.Sev.Logger().Errorf("failed %sProcessing script with exit code %d (uuid: %s): stderr: %s", processorType, cmd.ProcessState.ExitCode(), task.Uuid, stderr.String())
 					}
-
 				}
 			}
 		}
