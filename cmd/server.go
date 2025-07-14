@@ -211,31 +211,47 @@ func sendTelemetry(s *sev.Sev, isDocker bool) {
 	countDeleted, _ := taskRepo.CountDeleted()
 	countQueued, _ := taskRepo.CountByStatus(dto.QUEUED)
 	countRunning, _ := taskRepo.CountByStatus(dto.RUNNING)
+
 	countDoneSuccessful, _ := taskRepo.CountByStatus(dto.DONE_SUCCESSFUL)
 	countDoneFailed, _ := taskRepo.CountByStatus(dto.DONE_ERROR)
 	countDoneCanceled, _ := taskRepo.CountByStatus(dto.DONE_CANCELED)
+
+	countDeletedSuccessful, _ := taskRepo.CountDeletedByStatus(dto.DONE_SUCCESSFUL)
+	countDeletedFailed, _ := taskRepo.CountDeletedByStatus(dto.DONE_ERROR)
+	countDeletedCanceled, _ := taskRepo.CountDeletedByStatus(dto.DONE_CANCELED)
+
 	countWebhooks, _ := webhookRepo.Count()
 	countWebhooksDeleted, _ := webhookRepo.CountDeleted()
+
 	countPresets, _ := presetRepo.Count()
 	countPresetsDeleted, _ := presetRepo.CountDeleted()
+
 	countWatchfolder, _ := watchfolderRepo.Count()
 	countWatchfolderDeleted, _ := watchfolderRepo.CountDeleted()
 	s.SendTelemetry(
 		"https://telemetry.ffmate.io",
 		map[string]interface{}{
-			"Tasks":               count,
-			"TasksDeleted":        countDeleted,
-			"TasksQueued":         countQueued,
-			"TasksRunning":        countRunning,
+			"Tasks":        count,
+			"TasksDeleted": countDeleted,
+			"TasksQueued":  countQueued,
+			"TasksRunning": countRunning,
+
 			"TasksDoneSuccessful": countDoneSuccessful,
 			"TasksDoneFailed":     countDoneFailed,
 			"TasksDoneCanceled":   countDoneCanceled,
-			"Webhooks":            countWebhooks,
-			"WebhooksDeleted":     countWebhooksDeleted,
-			"Presets":             countPresets,
-			"PresetsDeleted":      countPresetsDeleted,
-			"Watchfolder":         countWatchfolder,
-			"WatchfolderDeleted":  countWatchfolderDeleted,
+
+			"TasksDeletedSuccessful": countDeletedSuccessful,
+			"TasksDeletedFailed":     countDeletedFailed,
+			"TasksDeletedCanceled":   countDeletedCanceled,
+
+			"Webhooks":        countWebhooks,
+			"WebhooksDeleted": countWebhooksDeleted,
+
+			"Presets":        countPresets,
+			"PresetsDeleted": countPresetsDeleted,
+
+			"Watchfolder":        countWatchfolder,
+			"WatchfolderDeleted": countWatchfolderDeleted,
 		},
 		map[string]interface{}{
 			"Tray":               config.Config().Tray,

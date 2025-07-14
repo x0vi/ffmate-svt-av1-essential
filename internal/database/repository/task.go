@@ -142,6 +142,12 @@ func (m *Task) CountDeleted() (int64, error) {
 	return count, db.Error
 }
 
+func (m *Task) CountDeletedByStatus(status dto.TaskStatus) (int64, error) {
+	var count int64
+	db := m.DB.Unscoped().Model(&model.Task{}).Where("deleted_at IS NOT NULL and status = ?", status).Count(&count)
+	return count, db.Error
+}
+
 func (m *Task) CountByStatus(status dto.TaskStatus) (int64, error) {
 	var count int64
 	db := m.DB.Model(&model.Task{}).Where("status = ?", status).Count(&count)
